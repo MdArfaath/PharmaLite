@@ -681,7 +681,7 @@ Three kinds of state, three tools — **use the lightest one that fits:**
 | Framework | next |
 | Language | typescript |
 | Styling | tailwindcss |
-| DB/Auth SDK | @supabase/supabase-js, @supabase/ssr |
+| DB/Auth SDK | @supabase/supabase-js **(pinned 2.49.4)**, @supabase/ssr (^0.6.1) |
 | Server state | @tanstack/react-query |
 | Client store | zustand |
 | Forms | react-hook-form |
@@ -812,18 +812,18 @@ Deliberately small. Every addition must justify itself against "does this make t
 
 | Module | Status |
 |---|---|
-| Architecture & PROJECT.md | ✅ Drafted (this doc) — **awaiting your approval** |
-| DB migrations | ⏳ Pending approval |
-| Auth (login/signup/provisioning) | ⏳ Pending |
-| App shell + bottom nav | ⏳ Pending |
-| Dashboard | ⏳ Pending |
-| Inventory (list/detail) | ⏳ Pending |
+| Architecture & PROJECT.md | ✅ Approved |
+| DB migrations | ✅ **Complete & validated** (0001–0006 + seed) — applied cleanly on Postgres 16; behavior + tenant-isolation tests pass |
+| Auth (login/signup/provisioning) | ✅ **Complete & verified** — login, signup→provision_shop, email-confirm fallback, /callback, sign out; build+typecheck+lint green |
+| App shell + bottom nav | ✅ **Complete** — (auth)/(app) route groups, session middleware + guards, header, bottom nav with center Sell |
+| Dashboard | ✅ **Complete** — reads v_dashboard_stats via React Query; today's sales + stat cards |
+| Inventory (list/detail) | ✅ **Complete & verified** — list w/ debounced name/brand/manufacturer search, add, edit, archive (soft-delete); duplicate-name guard; build+typecheck+lint green; RLS isolation + query paths tested on Postgres |
 | Add stock | ⏳ Pending |
 | Sell (core) | ⏳ Pending |
 | Low-stock alerts | ⏳ Pending |
 | Expiry alerts | ⏳ Pending |
 | Sales history | ⏳ Pending |
-| Settings | ⏳ Pending |
+| Settings | 🟡 Partial — shop info + thresholds (read-only) + account + sign out done; editing thresholds pending |
 | PWA polish | ⏳ Pending |
 
 ---
@@ -847,6 +847,9 @@ Deliberately small. Every addition must justify itself against "does this make t
 | 2026-07-30 | Initial architecture authored (v1.0). Awaiting approval before any code. |
 | 2026-07-30 | Decisions locked: single-batch kept for v1; sales now support **void + re-record** (not in-place edit); **stock_movements activated**. Added `void_sale` RPC, sales `status/voided_*/voids_sale_id` columns, updated business rule #8, sale detail route gains Void / Edit-as-new. |
 | 2026-07-30 | UX refinements added (new §13a): search matches **name/brand/manufacturer** (`search_medicines`); Sell screen **"Recently Sold"** quick-add chips (`v_recently_sold`); all quantity displays show **number + unit** via `formatQty`. Added supporting views, medicine search index, `unit` required on add, business rules 12–14, UI guidelines. |
+| 2026-07-30 | **DB migrations built & validated.** Wrote 0001–0006 + seed.sql. Verified on real Postgres 16: all migrations apply cleanly; sale math/snapshots, stock decrement, void restore, movement logging, oversell block, double-void block, and full **tenant isolation** (cross-shop read/sell/void all denied by RLS) confirmed by tests. Two ordering/grant bugs found and fixed during validation: (a) `auth_shop_id()` moved to after `profiles` exists; (b) explicit `GRANT`s for the `authenticated` role added to 0004 (tables) and 0006 (views) so the schema is self-contained, not reliant on Supabase default grants. |
+| 2026-07-30 | **Auth + App Shell built & verified.** Scaffolded Next.js 14 app: 3 Supabase clients (browser/server RLS + `server-only` admin), session middleware with route guards, login/signup (signup→`provision_shop` RPC with email-confirmation fallback via `ensureProvisioned`), `/callback` handler, (auth)/(app) route shells, bottom nav with center Sell, real dashboard on `v_dashboard_stats`, Settings+Account with sign out, teal design system + touch-friendly primitives, PWA manifest + icons. **No DB changes.** Verified: `npm run build` green, `tsc` clean, `next lint` no warnings. Decisions this module: (1) **`@supabase/supabase-js` pinned to `2.49.4`** — floated `2.111` broke `@supabase/ssr@0.6.1`'s 3-generic `SupabaseClient` (typed rows/RPC args collapsed to `never`); do not bump without re-checking typed client. (2) **System font stack instead of `next/font` Google fetch** — removes build-time network dependency, more reliable/private. (3) **Signup provisioning uses the SECURITY DEFINER `provision_shop` RPC under the user's own JWT**, not the admin client — narrower privilege. (4) DB types hand-written to satisfy postgrest `GenericSchema` (Row/Insert/Update/Relationships; RPC-only tables use `Record<string,never>` Insert/Update; RPC Args non-optional for exact-match resolution). |
+| 2026-07-31 | **Inventory module built & verified.** Added: `features/inventory/{schema,queries}.ts` (Zod form schema; React Query hooks: `useMedicineSearch` via `search_medicines` RPC, `useMedicine`, `useCreateMedicine`, `useUpdateMedicine`, `useArchiveMedicine`, plus `DuplicateNameError`); components `inventory/{MedicineCard,Badges,SearchInput,MedicineForm}`; screens for list (`InventoryList`), add (`new/AddMedicineForm`), and detail/edit/archive (`[medicineId]/MedicineDetail`). New shared primitives (reused, not duplicated): `ui/Select`, `common/ConfirmDialog` (bottom sheet), `common/States.ErrorState`, `hooks/useDebounce`. **No DB/auth/middleware/schema changes.** Decisions: (1) **Duplicate-name prevention in app layer** via case-insensitive `ilike` on active rows (no DB unique constraint added — soft-deleted names remain reusable, and a partial unique index wasn't in the approved schema). (2) **Prices entered in rupees, converted to paise** in `queries.toRow` so the DB only ever sees integer paise. (3) **One `MedicineForm`** shared by add + edit (initial prop prefills) to avoid duplication. (4) Archive = soft-delete (`deleted_at`), consistent with business rule 9. Verified: build+typecheck+lint green; on real Postgres confirmed duplicate detection (case-insensitive), insert w/ correct paise, search by brand+manufacturer, empty-search list, archive removes from search + frees the name, and **cross-tenant edit/archive blocked by RLS** (0 rows affected). |
 
 ---
 
