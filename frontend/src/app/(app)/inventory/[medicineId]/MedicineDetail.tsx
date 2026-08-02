@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Archive } from "lucide-react";
+import { ChevronLeft, Archive, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { MedicineForm } from "@/components/inventory/MedicineForm";
+import { StockBadge } from "@/components/inventory/Badges";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { LoadingState, ErrorState } from "@/components/common/States";
@@ -84,6 +85,24 @@ export function MedicineDetail({ medicineId }: { medicineId: string }) {
           <h1 className="mb-4 text-lg font-semibold text-slate-900">
             {medicine.name}
           </h1>
+
+          {/* Current stock + quick entry to Add Stock */}
+          <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">In stock:</span>
+              <StockBadge
+                quantity={medicine.quantity}
+                unit={medicine.unit}
+                threshold={medicine.low_stock_threshold}
+              />
+            </div>
+            <Link href={`/inventory/${medicine.id}/add-stock`}>
+              <Button size="md">
+                <PackagePlus className="h-4 w-4" />
+                Add stock
+              </Button>
+            </Link>
+          </div>
 
           <MedicineForm
             initial={medicine}

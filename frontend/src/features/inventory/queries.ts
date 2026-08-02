@@ -175,3 +175,33 @@ export function useArchiveMedicine() {
     },
   });
 }
+
+/**
+ * Add stock to a medicine via the add_stock RPC. The RPC atomically increments
+ * medicines.quantity and writes a 'restock' stock_movements row (PROJECT.md
+ * §8 / business rules), returning the updated medicine row. We seed that fresh
+ * row into the detail cache and invalidate lists + dashboard so on-hand counts
+ * update immediately everywhere.
+ */
+export function useAddStock(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (delta: number) => {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("add_stock", {
+        p_medicine_id: id,
+        p_delta: delta,
+        p_reason: "restock",
+      });
+      if (error) throw error;
+      return data as Medicine;
+    },
+    onSuccess: (row) => {
+      // Immediately reflect the new quantity in the detail cache.
+      if (row) qc.setQueryData(KEYS.detail(id), row);
+      qc.invalidateQueries({ queryKey: ["medicines"] });
+      qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+}
