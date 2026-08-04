@@ -14,7 +14,7 @@ import type { Database } from "@/lib/db/types";
  */
 
 // Routes that do NOT require a session.
-const PUBLIC_PREFIXES = ["/login", "/signup", "/callback", "/auth"];
+const PUBLIC_PREFIXES = ["/login", "/signup", "/callback", "/auth", "/offline"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some(

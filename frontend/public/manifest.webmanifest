@@ -1,24 +1,58 @@
 {
-  "name": "PharmaLite",
+  "id": "/",
+  "name": "PharmaLite — Pharmacy Inventory & Sales",
   "short_name": "PharmaLite",
-  "description": "Simple, fast inventory and sales for your pharmacy.",
-  "start_url": "/dashboard",
+  "description": "Simple, fast inventory and sales for your pharmacy. Track stock, sell in seconds, and stay on top of low-stock and expiry alerts.",
+  "start_url": "/dashboard?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
   "background_color": "#f8fafc",
   "theme_color": "#0c8563",
-  "orientation": "portrait",
+  "categories": ["medical", "business", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sell",
+      "short_name": "Sell",
+      "description": "Start a new sale",
+      "url": "/sell?source=pwa",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inventory",
+      "short_name": "Inventory",
+      "description": "View inventory",
+      "url": "/inventory?source=pwa",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
